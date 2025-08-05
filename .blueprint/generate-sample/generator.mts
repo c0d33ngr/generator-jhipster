@@ -97,7 +97,7 @@ export default class extends BaseGenerator<Config & { entities: string[] }> {
       },
       async generateYoRcSample() {
         if (!this.sampleYorcFolder) return;
-        this.copyTemplate(`../../../test-integration/${this.sampleName}/.yo-rc.json`, '.yo-rc.json');
+        this.copyTemplate(`../../../.blueprint/generate-sample/templates/samples/${this.sampleName}/.yo-rc.json`, '.yo-rc.json');
         const entitiesFiles = entitiesByType[this.entitiesSample];
         if (entitiesFiles) {
           this.jhipsterConfig.entities = entitiesFiles;
@@ -105,7 +105,7 @@ export default class extends BaseGenerator<Config & { entities: string[] }> {
           this.copyTemplate(
             entitiesFiles.map(entity => `.jhipster/${entity}.json`),
             this.projectFolder,
-            { noGlob: true, fromBasePath: this.templatePath('../../../test-integration/samples/') },
+            { noGlob: true, fromBasePath: this.templatePath('../../../.blueprint/generate-sample/templates/samples/samples/') },
           );
         }
         await this.composeWithJHipster(GENERATOR_APP, { generatorOptions: { destinationRoot: this.projectFolder } });

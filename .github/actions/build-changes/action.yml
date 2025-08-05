@@ -1,0 +1,306 @@
+#
+# Copyright 2013-2025 the original author or authors from the JHipster project.
+#
+# This file is part of the JHipster project, see https://www.jhipster.tech/
+# for more information.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: 'Detect Build Changes'
+description: 'Detect changes in JHipster codebase to determine which workflows should run'
+inputs:
+  skip-workflow:
+    description: 'Skip the workflow entirely'
+    required: false
+    default: 'false'
+  skip-changes-detection:
+    description: 'Skip git changes detection and run all workflows'
+    required: false
+    default: 'false'
+  base-ref:
+    description: 'Base reference for git diff (default: @~1)'
+    required: false
+    default: '@~1'
+
+outputs:
+  angular:
+    description: 'Angular-specific files have changed'
+    value: ${{ steps.detect-changes.outputs.angular }}
+  react:
+    description: 'React-specific files have changed' 
+    value: ${{ steps.detect-changes.outputs.react }}
+  vue:
+    description: 'Vue-specific files have changed'
+    value: ${{ steps.detect-changes.outputs.vue }}
+  client-common:
+    description: 'Client common files have changed'
+    value: ${{ steps.detect-changes.outputs.client-common }}
+  workflow-angular:
+    description: 'Should run Angular workflow'
+    value: ${{ steps.detect-changes.outputs.workflow-angular }}
+  workflow-react:
+    description: 'Should run React workflow'
+    value: ${{ steps.detect-changes.outputs.workflow-react }}
+  workflow-vue:
+    description: 'Should run Vue workflow'
+    value: ${{ steps.detect-changes.outputs.workflow-vue }}
+  client:
+    description: 'Client files have changed'
+    value: ${{ steps.detect-changes.outputs.client }}
+  server:
+    description: 'Server files have changed'
+    value: ${{ steps.detect-changes.outputs.server }}
+  common:
+    description: 'Common files have changed'
+    value: ${{ steps.detect-changes.outputs.common }}
+  workspaces:
+    description: 'Workspaces files have changed'
+    value: ${{ steps.detect-changes.outputs.workspaces }}
+  e2e:
+    description: 'E2E files have changed'
+    value: ${{ steps.detect-changes.outputs.e2e }}
+  any:
+    description: 'Any files have changed'
+    value: ${{ steps.detect-changes.outputs.any }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Detect changes
+      id: detect-changes
+      shell: bash
+      run: |
+        # Initialize variables
+        CLIENT=false
+        CLIENT_COMMON=false
+        SERVER=false
+        COMMON=false
+        WORKSPACES=false
+        E2E=false
+        ANY=false
+        
+        ANGULAR=false
+        REACT=false
+        VUE=false
+        
+        WORKFLOW_ANGULAR=false
+        WORKFLOW_REACT=false
+        WORKFLOW_VUE=false
+        
+        # Handle skip workflow case
+        if [[ "true" == "${{ inputs.skip-workflow }}" ]]; then
+          echo "angular=false" >> $GITHUB_OUTPUT
+          echo "react=false" >> $GITHUB_OUTPUT
+          echo "vue=false" >> $GITHUB_OUTPUT
+          echo "client-common=false" >> $GITHUB_OUTPUT
+          
+          echo "workflow-angular=false" >> $GITHUB_OUTPUT
+          echo "workflow-react=false" >> $GITHUB_OUTPUT
+          echo "workflow-vue=false" >> $GITHUB_OUTPUT
+          
+          echo "client=${CLIENT}" >> $GITHUB_OUTPUT
+          echo "server=${SERVER}" >> $GITHUB_OUTPUT
+          echo "common=${COMMON}" >> $GITHUB_OUTPUT
+          echo "workspaces=${WORKSPACES}" >> $GITHUB_OUTPUT
+          echo "e2e=${E2E}" >> $GITHUB_OUTPUT
+          echo "any=${ANY}" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Handle skip changes detection case (run all workflows)
+        if [[ "true" == "${{ inputs.skip-changes-detection }}" ]]; then
+          echo "angular=true" >> $GITHUB_OUTPUT
+          echo "react=true" >> $GITHUB_OUTPUT
+          echo "vue=true" >> $GITHUB_OUTPUT
+          echo "client-common=true" >> $GITHUB_OUTPUT
+          
+          echo "workflow-angular=true" >> $GITHUB_OUTPUT
+          echo "workflow-react=true" >> $GITHUB_OUTPUT
+          echo "workflow-vue=true" >> $GITHUB_OUTPUT
+          
+          echo "client=true" >> $GITHUB_OUTPUT
+          echo "server=true" >> $GITHUB_OUTPUT
+          echo "common=true" >> $GITHUB_OUTPUT
+          echo "workspaces=true" >> $GITHUB_OUTPUT
+          echo "e2e=true" >> $GITHUB_OUTPUT
+          echo "any=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Check Angular changes
+        echo "::group::Check Angular"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          'generators/angular'; then
+          ANGULAR=true
+          WORKFLOW_ANGULAR=true
+        fi
+        echo "::endgroup::"
+        
+        # Check React changes
+        echo "::group::Check React"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          'generators/react'; then
+          REACT=true
+          WORKFLOW_REACT=true
+        fi
+        echo "::endgroup::"
+        
+        # Check Vue changes
+        echo "::group::Check Vue"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          'generators/vue'; then
+          VUE=true
+          WORKFLOW_VUE=true
+        fi
+        echo "::endgroup::"
+        
+        # Check Client Common changes
+        echo "::group::Check Client Common"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          'generators/bootstrap-application-client' \
+          'generators/client/**' \
+          'generators/cypress/**' \
+          'generators/javascript/**'; then
+          CLIENT_COMMON=true
+        fi
+        echo "::endgroup::"
+        
+        # Check Client changes
+        echo "::group::Check Client"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          'generators/bootstrap-application-client' \
+          'generators/client/**' \
+          'generators/javascript/**' \
+          'generators/angular/**' \
+          'generators/react/**' \
+          'generators/vue/**'; then
+          CLIENT=true
+          ANY=true
+        fi
+        echo "::endgroup::"
+        
+        # Check Server changes
+        echo "::group::Check Server"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          'generators/base-entity-changes' \
+          'generators/bootstrap-application-server' \
+          'generators/cucumber' \
+          'generators/feign-client' \
+          'generators/gatling' \
+          'generators/gradle' \
+          'generators/java' \
+          'generators/liquibase' \
+          'generators/maven' \
+          'generators/server' \
+          'generators/spring-boot' \
+          'generators/spring-cache' \
+          'generators/spring-cloud-stream' \
+          'generators/spring-data-cassandra' \
+          'generators/spring-data-couchbase' \
+          'generators/spring-data-elasticsearch' \
+          'generators/spring-data-mongodb' \
+          'generators/spring-data-neo4j' \
+          'generators/spring-data-relational' \
+          'generators/spring-websocket'; then
+          SERVER=true
+          ANY=true
+        fi
+        echo "::endgroup::"
+        
+        # Check Common changes
+        echo "::group::Check Common"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          '.blueprint' \
+          '.github/actions' \
+          '.github/workflows' \
+          'generators/app' \
+          'generators/bootstrap-application' \
+          'generators/bootstrap-application-base' \
+          'generators/common' \
+          'generators/git' \
+          'generators/jdl' \
+          'generators/languages' \
+          'jdl' \
+          'lib' \
+          'test-integration' \
+          'utils'; then
+          CLIENT=true
+          SERVER=true
+          COMMON=true
+          ANY=true
+        fi
+        echo "::endgroup::"
+        
+        # Check Base changes
+        echo "::group::Check Base"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          'generators/base' \
+          'generators/base-core' \
+          'generators/base-application' \
+          'generators/bootstrap' \
+          'generators/bootstrap-application-base' \
+          $(ls generators/*.* 2>/dev/null || true); then
+          CLIENT=true
+          SERVER=true
+          COMMON=true
+          ANY=true
+          ANGULAR=true
+          REACT=true
+          VUE=true
+        fi
+        echo "::endgroup::"
+        
+        # Check E2E changes
+        echo "::group::Check E2E"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          'generators/cypress'; then
+          E2E=true
+          ANY=true
+        fi
+        echo "::endgroup::"
+        
+        # Check Workspaces changes
+        echo "::group::Check Workspaces"
+        if ! git -c color.ui=always diff --exit-code ${{ inputs.base-ref }} -- \
+          'generators/workspaces' \
+          'generators/docker' \
+          'generators/docker-compose'; then
+          WORKSPACES=true
+          ANY=true
+        fi
+        echo "::endgroup::"
+        
+        # Set workflow flags based on conditions
+        if [ "true" == "$SERVER" ] || [ "true" == "$CLIENT_COMMON" ] || [ "true" == "$COMMON" ] || [ "true" == "$WORKSPACES" ] || [ "true" == "$E2E" ]; then
+          WORKFLOW_ANGULAR=true
+          WORKFLOW_REACT=true
+          WORKFLOW_VUE=true
+        fi
+        
+        # Output all results
+        echo "angular=${ANGULAR}" >> $GITHUB_OUTPUT
+        echo "react=${REACT}" >> $GITHUB_OUTPUT
+        echo "vue=${VUE}" >> $GITHUB_OUTPUT
+        echo "client-common=${CLIENT_COMMON}" >> $GITHUB_OUTPUT
+        
+        echo "workflow-angular=${WORKFLOW_ANGULAR}" >> $GITHUB_OUTPUT
+        echo "workflow-react=${WORKFLOW_REACT}" >> $GITHUB_OUTPUT
+        echo "workflow-vue=${WORKFLOW_VUE}" >> $GITHUB_OUTPUT
+        
+        echo "client=${CLIENT}" >> $GITHUB_OUTPUT
+        echo "server=${SERVER}" >> $GITHUB_OUTPUT
+        echo "common=${COMMON}" >> $GITHUB_OUTPUT
+        echo "workspaces=${WORKSPACES}" >> $GITHUB_OUTPUT
+        echo "e2e=${E2E}" >> $GITHUB_OUTPUT
+        echo "any=${ANY}" >> $GITHUB_OUTPUT

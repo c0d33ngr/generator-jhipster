@@ -35,7 +35,7 @@ writeFileSync(
         ...existing.include,
         ...process.argv
           .slice(2)
-          .map(file => join(packageRoot, file.includes('/') ? file : `test-integration/workflow-samples/${file}.json`))
+          .map(file => join(packageRoot, file.includes('/') ? file : `.blueprint/generate-sample/templates/samples/workflow-samples/${file}.json`))
           .map(file => {
             try {
               return JSON.parse(readFileSync(file).toString())

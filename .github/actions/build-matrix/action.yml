@@ -38,7 +38,7 @@ inputs:
   samples-directory:
     description: 'Samples path'
     required: false
-    default: test-integration/workflow-samples
+    default: .blueprint/generate-sample/templates/samples/workflow-samples
   skip-workflow:
     description: 'Skip the workflow'
     required: false
@@ -96,9 +96,11 @@ runs:
         node-version: 20
     - name: 'Check changes'
       id: build-changes
-      run: |
-        SKIP_WORKFLOW=${{inputs.skip-workflow}} SKIP_CHANGES_DETECTION=${{inputs.skip-changes-detection}} ${{ inputs.generator-jhipster-directory }}/test-integration/scripts/99-build-changes.sh
-      shell: bash
+    - uses: ./.github/actions/build-changes
+      with:
+        skip-workflow: ${{ inputs.skip-workflow }}
+        skip-changes-detection: ${{ inputs.skip-changes-detection }}
+        base-ref: '@~1'
 
     - name: 'Build matrix'
       id: build-matrix

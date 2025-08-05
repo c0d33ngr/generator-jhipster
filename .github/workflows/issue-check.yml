@@ -62,9 +62,9 @@ jobs:
           fetch-depth: 2
       - uses: jhipster/actions/setup-runner@v0
         with:
-          node-version: ${{ steps.setup.outputs.node-version }}
-          java-version: ${{ steps.setup.outputs.java-version }}
-          npm-version: ${{ steps.setup.outputs.npm-version }}
+          node-version: ${{ steps.init-env.outputs.node-version }}
+          java-version: ${{ steps.init-env.outputs.java-version }}
+          npm-version: ${{ steps.init-env.outputs.npm-version }}
           maven-cache: true
           gradle-cache: true
           binary-dir: ${{ github.workspace }}/generator-jhipster/bin
