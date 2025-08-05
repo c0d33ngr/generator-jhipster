@@ -1,0 +1,254 @@
+#
+# Copyright 2013-2025 the original author or authors from the JHipster project.
+#
+# This file is part of the JHipster project, see https://www.jhipster.tech/
+# for more information.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: 'Generate JHipster Config'
+description: 'Generate JHipster configuration and entity files'
+inputs:
+  jhi-folder-app:
+    description: 'Application folder path'
+    required: true
+    default: '${{ runner.temp }}/app'
+  jhi-app:
+    description: 'Application name/type'
+    required: true
+  jhi-entity:
+    description: 'Entity type (mongodb, couchbase, neo4j, cassandra, micro, sqllight, sqlfull, sql, jdl, or custom)'
+    required: false
+    default: ''
+  jhi-samples:
+    description: 'Samples directory path'
+    required: true
+  jhi-entity-samples:
+    description: 'Entity samples directory path'
+    required: true
+  jhi-integ:
+    description: 'Integration directory path'
+    required: true
+  jhi-home:
+    description: 'JHipster home directory'
+    required: false
+    default: '${{ github.workspace }}'
+  jhi-repo:
+    description: 'Repository flag (if set, will clean folder)'
+    required: false
+    default: ''
+  jhi-jdl-entity:
+    description: 'JDL entity name for JDL generation'
+    required: false
+    default: ''
+  jhipster-cli:
+    description: 'JHipster CLI command'
+    required: false
+    default: 'jhipster'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare folder structure
+      shell: bash
+      run: |
+        # Clean folder if JHI_REPO is set
+        if [[ "${{ inputs.jhi-repo }}" != "" ]]; then
+          cd "${{ inputs.jhi-home }}"
+          rm -rf "${{ inputs.jhi-folder-app }}"
+        fi
+        
+        # Create necessary directories
+        mkdir -p "${{ inputs.jhi-folder-app }}"/.jhipster/
+        cd "${{ inputs.jhi-folder-app }}"
+
+    - name: Copy JHipster configuration
+      if: inputs.jhi-entity != 'jdl' && inputs.jhi-app != 'jdl'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        
+        # Determine sample directory
+        if [[ -f "${{ inputs.jhi-samples }}/${{ inputs.jhi-app }}"/.yo-rc.json ]]; then
+          JHI_APP_SAMPLE_DIR="${{ inputs.jhi-samples }}/${{ inputs.jhi-app }}"
+        else
+          JHI_APP_SAMPLE_DIR="${{ inputs.jhi-home }}/.blueprint/generate-sample/templates/samples/samples/${{ inputs.jhi-app }}"
+        fi
+        
+        # Copy configuration
+        cp -f "$JHI_APP_SAMPLE_DIR"/.yo-rc.json "${{ inputs.jhi-folder-app }}"/
+        echo "${{ inputs.jhi-app }}: ($JHI_APP_SAMPLE_DIR)"
+        ls -al "${{ inputs.jhi-folder-app }}"/
+
+    - name: Copy MongoDB/Couchbase entities
+      if: inputs.jhi-entity == 'mongodb' || inputs.jhi-entity == 'couchbase'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        
+        # Copy entities
+        entities=(
+          "DocumentBankAccount" "EmbeddedOperation" "Place" "Division"
+          "FieldTestEntity" "FieldTestMapstructAndServiceClassEntity" 
+          "FieldTestServiceClassAndJpaFilteringEntity" "FieldTestServiceImplEntity"
+          "FieldTestInfiniteScrollEntity" "FieldTestPaginationEntity"
+          "EntityWithDTO" "EntityWithPaginationAndDTO" "EntityWithServiceClassAndPagination"
+          "EntityWithServiceClassPaginationAndDTO" "EntityWithServiceImplAndDTO"
+          "EntityWithServiceImplAndPagination" "EntityWithServiceImplPaginationAndDTO"
+        )
+        
+        for entity in "${entities[@]}"; do
+          cp "${{ inputs.jhi-entity-samples }}/${entity}.json" "${{ inputs.jhi-folder-app }}"/.jhipster/
+        done
+
+    - name: Copy Neo4j entities
+      if: inputs.jhi-entity == 'neo4j'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        entities=("Album" "Track" "Genre" "Artist")
+        
+        for entity in "${entities[@]}"; do
+          cp "${{ inputs.jhi-entity-samples }}/${entity}.json" "${{ inputs.jhi-folder-app }}"/.jhipster/
+        done
+
+    - name: Copy Cassandra entities
+      if: inputs.jhi-entity == 'cassandra'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        entities=(
+          "CassBankAccount" "FieldTestEntity" "FieldTestServiceImplEntity"
+          "FieldTestMapstructAndServiceClassEntity" "FieldTestPaginationEntity"
+        )
+        
+        for entity in "${entities[@]}"; do
+          cp "${{ inputs.jhi-entity-samples }}/${entity}.json" "${{ inputs.jhi-folder-app }}"/.jhipster/
+        done
+
+    - name: Copy Microservice entities
+      if: inputs.jhi-entity == 'micro'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        entities=(
+          "MicroserviceBankAccount" "MicroserviceOperation" "MicroserviceLabel"
+          "FieldTestEntity" "FieldTestMapstructAndServiceClassEntity"
+          "FieldTestServiceClassAndJpaFilteringEntity" "FieldTestServiceImplEntity"
+          "FieldTestInfiniteScrollEntity" "FieldTestPaginationEntity"
+        )
+        
+        for entity in "${entities[@]}"; do
+          cp "${{ inputs.jhi-entity-samples }}/${entity}.json" "${{ inputs.jhi-folder-app }}"/.jhipster/
+        done
+
+    - name: Copy SQL Light entities
+      if: inputs.jhi-entity == 'sqllight'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        entities=("BankAccount" "Label" "Operation")
+        
+        for entity in "${entities[@]}"; do
+          cp "${{ inputs.jhi-entity-samples }}/${entity}.json" "${{ inputs.jhi-folder-app }}"/.jhipster/
+        done
+
+    - name: Copy SQL Full entities
+      if: inputs.jhi-entity == 'sqlfull'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        entities=(
+          "BankAccount" "Label" "Operation" "Place" "Division"
+          "FieldTestEntity" "FieldTestMapstructAndServiceClassEntity"
+          "FieldTestServiceClassAndJpaFilteringEntity" "FieldTestServiceImplEntity"
+          "FieldTestInfiniteScrollEntity" "FieldTestPaginationEntity" "FieldTestEnumWithValue"
+          "TestEntity" "TestMapstruct" "TestServiceClass" "TestServiceImpl"
+          "TestInfiniteScroll" "TestPagination" "TestManyToOne" "TestManyToMany"
+          "TestManyRelPaginDTO" "TestOneToOne" "TestCustomTableName"
+          "TestTwoRelationshipsSameEntity" "SuperMegaLargeTestEntity"
+          "EntityWithDTO" "EntityWithPaginationAndDTO" "EntityWithServiceClassAndPagination"
+          "EntityWithServiceClassPaginationAndDTO" "EntityWithServiceImplAndDTO"
+          "EntityWithServiceImplAndPagination" "EntityWithServiceImplPaginationAndDTO"
+          "MapsIdParentEntityWithoutDTO" "MapsIdChildEntityWithoutDTO" "MapsIdGrandchildEntityWithoutDTO"
+          "MapsIdParentEntityWithDTO" "MapsIdChildEntityWithDTO" "MapsIdGrandchildEntityWithDTO"
+          "MapsIdUserProfileWithDTO" "JpaFilteringRelationship" "JpaFilteringOtherSide"
+        )
+        
+        for entity in "${entities[@]}"; do
+          cp "${{ inputs.jhi-entity-samples }}/${entity}.json" "${{ inputs.jhi-folder-app }}"/.jhipster/
+        done
+
+    - name: Copy SQL entities
+      if: inputs.jhi-entity == 'sql'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        entities=(
+          "BankAccount" "Label" "Operation"
+          "FieldTestEntity" "FieldTestMapstructAndServiceClassEntity"
+          "FieldTestServiceClassAndJpaFilteringEntity" "FieldTestServiceImplEntity"
+          "FieldTestInfiniteScrollEntity" "FieldTestPaginationEntity" "FieldTestEnumWithValue"
+          "EntityWithDTO" "EntityWithPaginationAndDTO" "EntityWithServiceClassAndPagination"
+          "EntityWithServiceClassPaginationAndDTO" "EntityWithServiceImplAndDTO"
+          "EntityWithServiceImplAndPagination" "EntityWithServiceImplPaginationAndDTO"
+          "MapsIdUserProfileWithDTO"
+        )
+        
+        for entity in "${entities[@]}"; do
+          cp "${{ inputs.jhi-entity-samples }}/${entity}.json" "${{ inputs.jhi-folder-app }}"/.jhipster/
+        done
+
+    - name: Set JDL entity for custom types
+      if: inputs.jhi-entity != '' && inputs.jhi-entity != 'mongodb' && inputs.jhi-entity != 'couchbase' && inputs.jhi-entity != 'neo4j' && inputs.jhi-entity != 'cassandra' && inputs.jhi-entity != 'micro' && inputs.jhi-entity != 'sqllight' && inputs.jhi-entity != 'sqlfull' && inputs.jhi-entity != 'sql' && inputs.jhi-entity != 'jdl'
+      shell: bash
+      run: |
+        echo "JHI_JDL_ENTITY=${{ inputs.jhi-entity }}" >> $GITHUB_ENV
+
+    - name: Generate JDL entities
+      if: inputs.jhi-jdl-entity != '' && inputs.jhi-jdl-entity != 'none'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        ${{ inputs.jhipster-cli }} --no-insight jdl "${{ inputs.jhi-samples }}"/jdl-entities/${{ inputs.jhi-jdl-entity }}.jdl --json-only
+
+    - name: Generate JDL entities (from environment)
+      if: inputs.jhi-jdl-entity == '' && env.JHI_JDL_ENTITY != '' && env.JHI_JDL_ENTITY != 'none'
+      shell: bash
+      run: |
+        cd "${{ inputs.jhi-folder-app }}"
+        ${{ inputs.jhipster-cli }} --no-insight jdl "${{ inputs.jhi-samples }}"/jdl-entities/${{ env.JHI_JDL_ENTITY }}.jdl --json-only
+
+    - name: Setup insight configuration
+      shell: bash
+      run: |
+        # Force no insight
+        if [ "${{ inputs.jhi-folder-app }}" == "$HOME/app" ]; then
+          mkdir -p "$HOME/.config/configstore/"
+          cp "${{ inputs.jhi-integ }}"/configstore/*.json "$HOME/.config/configstore/"
+        fi
+
+    - name: List generated entities
+      shell: bash
+      run: |
+        echo "*** Entities:"
+        ls -al "${{ inputs.jhi-folder-app }}"/.jhipster/ || true
+
+outputs:
+  app-folder:
+    description: 'Path to the configured application folder'
+    value: ${{ inputs.jhi-folder-app }}
+  entities-path:
+    description: 'Path to the entities directory'  
+    value: ${{ inputs.jhi-folder-app }}/.jhipster

@@ -15,7 +15,7 @@ export const getGitChanges = async (options: { allTrue?: boolean } = {}) => {
   }
 
   const hasClientWorkflowChanges = (client: 'angular' | 'react' | 'vue') =>
-    hasPatternChanges(`.github/workflows/${client}.yml`) || hasPatternChanges(`test-integration/workflow-samples/${client}.json`);
+    hasPatternChanges(`.github/workflows/${client}.yml`) || hasPatternChanges(`.blueprint/generate-sample/templates/samples/workflow-samples/${client}.json`);
   return {
     angular: hasPatternChanges('generators/angular/**'),
     angularWorkflow: hasClientWorkflowChanges('angular'),
@@ -23,7 +23,7 @@ export const getGitChanges = async (options: { allTrue?: boolean } = {}) => {
       hasPatternChanges('lib/**') ||
       hasPatternChanges('generators/*') ||
       hasPatternChanges('generators/{base*,bootstrap*,git,jdl,project-name}/**'),
-    ci: hasPatternChanges('.github/{actions,workflows}/**') || hasPatternChanges('test-integration/{,jdl}samples/**'),
+    ci: hasPatternChanges('.github/{actions,workflows}/**') || hasPatternChanges('.blueprint/generate-sample/templates/samples/{,jdl}samples/**'),
     devBlueprint: hasPatternChanges('.blueprint/**'),
     devserverWorkflow: hasPatternChanges('.github/workflows/devserver.yml'),
     common: hasPatternChanges('generators/{app,common,docker,languages}/**'),

@@ -68,8 +68,8 @@ jobs:
           application-packaging: ${{ (matrix.war == 1 && 'war') || 'jar' }}
       - uses: jhipster/actions/setup-runner@v0
         with:
-          node-version: ${{ steps.setup.outputs.node-version }}
-          java-version: ${{ steps.setup.outputs.java-version }}
+          node-version: ${{ steps.init-env.outputs.node-version }}
+          java-version: ${{ steps.init-env.outputs.java-version }}
           maven-cache: true
           binary-dir: ${{ github.workspace }}/generator-jhipster/bin
       - run: npm ci --ignore-scripts
@@ -81,16 +81,41 @@ jobs:
         with:
           jhipster-bom-ref: main
       - name: 'GENERATION: config'
-        run: $JHI_SCRIPTS/11-generate-config.sh
+      - uses: ./generator-jhipster/.github/actions/generate-config
+        with:
+          jhi-folder-app: '${{ github.workspace }}/app'
+          jhi-app: '${{ matrix.app-type }}'
+          jhi-entity: '${{ matrix.entity }}'
+          jhi-samples: '${{ github.workspace }}/generator-jhipster/.blueprint/generate-sample/templates/samples/incremental-changelog-samples'
+          jhi-entity-samples: '${{ github.workspace }}/generator-jhipster/.blueprint/generate-sample/templates/samples/entity-samples'
+          jhi-integ: '${{ github.workspace }}/generator-jhipster/test-integration'
+          jhi-home: '${{ github.workspace }}'
+          jhipster-cli: 'jhipster.cjs'
       - name: 'GENERATION: project'
-        run: $JHI_SCRIPTS/12-generate-project.sh --force --creation-timestamp '2020-01-01'
+        uses: ./generator-jhipster/.github/actions/generate-project
+        with:
+          jhi-cli: 'jhipster.cjs'
+          jhi-folder-app: '${{ github.workspace }}/app'
+          jhi-entity: '${{ matrix.entity }}'
+          jhi-app: '${{ matrix.app-type }}'
+          jhi-samples: '${{ github.workspace }}/generator-jhipster/.blueprint/generate-sample/templates/samples/incremental-changelog-samples'
+          jhi-integ: '${{ github.workspace }}/generator-jhipster/test-integration'
+          extra-args: '--force --creation-timestamp "2020-01-01"'
         env:
-          JHI_SAMPLES: ${{ github.workspace }}/generator-jhipster/test-integration/incremental-changelog-samples
+          JHI_SAMPLES: ${{ github.workspace }}/generator-jhipster/.blueprint/generate-sample/templates/samples/incremental-changelog-samples
           JHI_CLI: jhipster.cjs
       - name: 'GENERATION: incremental project'
-        run: $JHI_SCRIPTS/12-generate-project.sh --incremental-changelog --force
+        uses: ./generator-jhipster/.github/actions/generate-project
+        with:
+          jhi-cli: 'jhipster.cjs'
+          jhi-folder-app: '${{ github.workspace }}/app'
+          jhi-entity: '${{ matrix.entity }}'
+          jhi-app: '${{ matrix.app-type }}'
+          jhi-samples: '${{ github.workspace }}/generator-jhipster/.blueprint/generate-sample/templates/samples/incremental-changelog-samples'
+          jhi-integ: '${{ github.workspace }}/generator-jhipster/test-integration'
+          extra-args: '--incremental-changelog --force'
         env:
-          JHI_SAMPLES: ${{ github.workspace }}/generator-jhipster/test-integration/incremental-changelog-samples
+          JHI_SAMPLES: ${{ github.workspace }}/generator-jhipster/.blueprint/generate-sample/templates/samples/incremental-changelog-samples
           JHI_APP: ${{ matrix.app-type }}-post
           JHI_CLI: jhipster.cjs
       - name: 'GENERATION: incremental changes'

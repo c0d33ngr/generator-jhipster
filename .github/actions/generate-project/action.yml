@@ -1,0 +1,140 @@
+#
+# Copyright 2013-2025 the original author or authors from the JHipster project.
+#
+# This file is part of the JHipster project, see https://www.jhipster.tech/
+# for more information.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: 'Generate JHipster Project'
+description: 'Generate JHipster project using CLI with various configurations'
+inputs:
+  jhi-cli:
+    description: 'JHipster CLI command'
+    required: true
+  jhi-folder-app:
+    description: 'Application folder path'
+    required: true
+    default: '${{ runner.temp }}/app'
+  jhi-entity:
+    description: 'Entity type (jdl or other)'
+    required: false
+  jhi-app:
+    description: 'Application name/type'
+    required: true
+  jhi-samples:
+    description: 'Samples directory path'
+    required: true
+  jhi-integ:
+    description: 'Integration directory path'
+    required: true
+  jhi-jdl-app:
+    description: 'JDL application files (comma-separated)'
+    required: false
+  jhi-jdl-samples:
+    description: 'JDL samples directory path'
+    required: false
+  jhi-generate-skip-config:
+    description: 'Skip configuration file (1 to skip)'
+    required: false
+    default: '0'
+  extra-args:
+    description: 'Extra arguments to pass to JHipster CLI'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup directories and disable insight
+      shell: bash
+      run: |
+        # Force no insight - setup configstore
+        if [ "${{ inputs.jhi-folder-app }}" == "$HOME/app" ]; then
+          mkdir -p "$HOME/.config/configstore/"
+          cp "${{ inputs.jhi-integ }}"/configstore/*.json "$HOME/.config/configstore/"
+        fi
+
+    - name: Generate project with JDL (entity mode)
+      if: inputs.jhi-entity == 'jdl'
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.jhi-folder-app }}"
+        
+        # Process comma-separated JHI_APP values
+        IFS=','
+        for i in ${{ inputs.jhi-app }}; do
+          cp -f "${{ inputs.jhi-samples }}/$i"/*.jdl "${{ inputs.jhi-folder-app }}/"
+        done
+        
+        cd "${{ inputs.jhi-folder-app }}"
+        ls -la "${{ inputs.jhi-folder-app }}/"
+        
+        ${{ inputs.jhi-cli }} import-jdl *.jdl --no-insight --skip-jhipster-dependencies ${{ inputs.extra-args }}
+
+    - name: Generate project with JDL (app mode)
+      if: inputs.jhi-entity != 'jdl' && inputs.jhi-app == 'jdl'
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.jhi-folder-app }}"
+        
+        # Process comma-separated JHI_JDL_APP values
+        IFS=','
+        for i in ${{ inputs.jhi-jdl-app }}; do
+          if [[ -f "$i" ]]; then
+            cp -f "$i" "${{ inputs.jhi-folder-app }}/"
+          elif [[ -d "$i" ]]; then
+            cp -f "$i"/*.jdl "${{ inputs.jhi-folder-app }}/"
+          elif [[ -d "${{ inputs.jhi-samples }}/jdl-entities/$i" ]]; then
+            cp -f "${{ inputs.jhi-samples }}/jdl-entities/$i"/*.jdl "${{ inputs.jhi-folder-app }}/"
+          elif [[ -f "${{ inputs.jhi-samples }}/jdl-entities/$i.jdl" ]]; then
+            cp -f "${{ inputs.jhi-samples }}/jdl-entities/$i.jdl" "${{ inputs.jhi-folder-app }}/"
+          else
+            cp -f "${{ inputs.jhi-jdl-samples }}/$i"/*.jdl "${{ inputs.jhi-folder-app }}/"
+          fi
+        done
+        
+        ls -la "${{ inputs.jhi-folder-app }}/"
+        cd "${{ inputs.jhi-folder-app }}"
+        
+        ${{ inputs.jhi-cli }} import-jdl *.jdl --no-insight --skip-jhipster-dependencies ${{ inputs.extra-args }}
+
+    - name: Generate project with JHipster CLI (standard mode)
+      if: inputs.jhi-entity != 'jdl' && inputs.jhi-app != 'jdl'
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.jhi-folder-app }}"
+        
+        # Copy configuration file unless skipping
+        if [[ "${{ inputs.jhi-generate-skip-config }}" != "1" ]]; then
+          cp -f "${{ inputs.jhi-samples }}/${{ inputs.jhi-app }}"/.yo-rc.json "${{ inputs.jhi-folder-app }}/"
+        else
+          echo "skipping config file"
+        fi
+        
+        cd "${{ inputs.jhi-folder-app }}"
+        
+        ${{ inputs.jhi-cli }} --force --no-insight --skip-checks --skip-jhipster-dependencies ${{ inputs.extra-args }}
+
+    - name: Check generated project
+      shell: bash
+      run: |
+        ls -al "${{ inputs.jhi-folder-app }}"
+        cd "${{ inputs.jhi-folder-app }}"
+        git --no-pager log -n 10 --graph --pretty='%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit || true
+
+outputs:
+  app-folder:
+    description: 'Path to the generated application folder'
+    value: ${{ inputs.jhi-folder-app }}

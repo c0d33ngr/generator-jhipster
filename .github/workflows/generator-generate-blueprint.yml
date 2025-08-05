@@ -52,8 +52,8 @@ jobs:
           executable: jhipster-foo
       - uses: jhipster/actions/setup-runner@v0
         with:
-          node-version: ${{ steps.setup.outputs.node-version }}
-          java-version: ${{ steps.setup.outputs.java-version }}
+          node-version: ${{ steps.init-env.outputs.node-version }}
+          java-version: ${{ steps.init-env.outputs.java-version }}
           maven-cache: true
           binary-dir: ${{ github.workspace }}/generator-jhipster/bin
       - run: npm ci --ignore-scripts
@@ -76,9 +76,26 @@ jobs:
           npm link generator-jhipster
           npm link
       - name: 'GENERATION: config'
-        run: $JHI_SCRIPTS/11-generate-config.sh
+        uses: ./generator-jhipster/.github/actions/generate-config
+        with:
+          jhi-folder-app: '${{ github.workspace }}/app'
+          jhi-app: '${{ matrix.app-type }}'
+          jhi-entity: '${{ matrix.entity }}'
+          jhi-samples: '${{ github.workspace }}/generator-jhipster/.blueprint/generate-sample/templates/samples/incremental-changelog-samples'
+          jhi-entity-samples: '${{ github.workspace }}/generator-jhipster/.blueprint/generate-sample/templates/samples/entity-samples'
+          jhi-integ: '${{ github.workspace }}/generator-jhipster/test-integration'
+          jhi-home: '${{ github.workspace }}'
+          jhipster-cli: 'jhipster.cjs'
       - name: 'GENERATION: project'
-        run: $JHI_SCRIPTS/12-generate-project.sh ${{ matrix.extra-args }} ${{ matrix.new-extra-args }} --blueprints foo
+        uses: ./generator-jhipster/.github/actions/generate-project
+        with:
+          jhi-cli: 'jhipster.cjs'
+          jhi-folder-app: '${{ github.workspace }}/app'
+          jhi-entity: '${{ matrix.entity }}'
+          jhi-app: '${{ matrix.app-type }}'
+          jhi-samples: '${{ github.workspace }}/generator-jhipster/.blueprint/generate-sample/templates/samples/incremental-changelog-samples'
+          jhi-integ: '${{ github.workspace }}/generator-jhipster/test-integration'
+          extra-args: '${{ matrix.extra-args }} ${{ matrix.new-extra-args }} --blueprints foo' 
         env:
           JHI_CLI: jhipster.cjs
       - name: 'GENERATION: jhipster info'

@@ -63,7 +63,7 @@ export default class extends BaseGenerator {
 
           randomEnvironment = true;
           if (enableAnyTest || hasSonarPrChanges) {
-            const content = await readFile(join(getPackageRoot(), `test-integration/workflow-samples/${this.workflow}.json`));
+            const content = await readFile(join(getPackageRoot(), `.blueprint/generate-sample/templates/samples/workflow-samples/${this.workflow}.json`));
             const parsed: WorkflowSamples = JSON.parse(content.toString());
             matrix = Object.fromEntries(
               parsed.include

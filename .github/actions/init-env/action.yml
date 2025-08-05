@@ -1,0 +1,327 @@
+#
+# Copyright 2013-2025 the original author or authors from the JHipster project.
+#
+# This file is part of the JHipster project, see https://www.jhipster.tech/
+# for more information.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: 'Initialize JHipster Environment'
+description: 'Initialize JHipster environment variables and paths'
+inputs:
+  jhi-repo:
+    description: 'Repository URI'
+    required: false
+    default: ''
+  jhi-home:
+    description: 'JHipster home directory'
+    required: false
+    default: ''
+  jhi-cli-package:
+    description: 'CLI package name'
+    required: false
+    default: ''
+  jhi-workspace:
+    description: 'Workspace directory'
+    required: false
+    default: ''
+  jhi-cli-package-path:
+    description: 'CLI package path'
+    required: false
+    default: ''
+  jhi-repo-path:
+    description: 'Repository local path'
+    required: false
+    default: ''
+  jhi-lib-home:
+    description: 'Library home directory'
+    required: false
+    default: ''
+  jhi-integ:
+    description: 'Integration directory'
+    required: false
+    default: ''
+  jhi-samples:
+    description: 'Samples directory'
+    required: false
+    default: ''
+  jhi-jdl-samples:
+    description: 'JDL samples directory'
+    required: false
+    default: ''
+  jhi-scripts:
+    description: 'Scripts directory'
+    required: false
+    default: ''
+  jhi-folder-app:
+    description: 'Application folder'
+    required: false
+    default: ''
+  jhi-jdk:
+    description: 'JDK version'
+    required: false
+    default: ''
+  jhi-cli:
+    description: 'JHipster CLI command'
+    required: false
+    default: ''
+  jhi-github-ci:
+    description: 'GitHub CI flag'
+    required: false
+    default: 'true'
+  generator-path:
+    description: 'Path to generator-jhipster relative to workspace'
+    required: false
+    default: 'generator-jhipster'
+
+outputs:
+  jhi-detected-dir:
+    description: 'Detected JHipster directory'
+    value: ${{ steps.init.outputs.jhi-detected-dir }}
+  jhi-repo:
+    description: 'Repository URI'
+    value: ${{ steps.init.outputs.jhi-repo }}
+  jhi-home:
+    description: 'JHipster home directory'
+    value: ${{ steps.init.outputs.jhi-home }}
+  jhi-cli-package-path:
+    description: 'CLI package path'
+    value: ${{ steps.init.outputs.jhi-cli-package-path }}
+  jhi-repo-path:
+    description: 'Repository local path'
+    value: ${{ steps.init.outputs.jhi-repo-path }}
+  jhi-lib-home:
+    description: 'Library home directory'
+    value: ${{ steps.init.outputs.jhi-lib-home }}
+  jhi-integ:
+    description: 'Integration directory'
+    value: ${{ steps.init.outputs.jhi-integ }}
+  jhi-samples:
+    description: 'Samples directory'
+    value: ${{ steps.init.outputs.jhi-samples }}
+  jhi-entity-samples:
+    description: 'Entity samples directory'
+    value: ${{ steps.init.outputs.jhi-entity-samples }}
+  jhi-jdl-samples:
+    description: 'JDL samples directory'
+    value: ${{ steps.init.outputs.jhi-jdl-samples }}
+  jhi-scripts:
+    description: 'Scripts directory'
+    value: ${{ steps.init.outputs.jhi-scripts }}
+  jhi-folder-app:
+    description: 'Application folder'
+    value: ${{ steps.init.outputs.jhi-folder-app }}
+  jhi-jdk:
+    description: 'JDK version'
+    value: ${{ steps.init.outputs.jhi-jdk }}
+  jhi-cli:
+    description: 'JHipster CLI command'
+    value: ${{ steps.init.outputs.jhi-cli }}
+  jhi-node-version:
+    description: 'Node version'
+    value: ${{ steps.init.outputs.jhi-node-version }}
+  jhi-npm-version:
+    description: 'NPM version'
+    value: ${{ steps.init.outputs.jhi-npm-version }}
+  jhi-gen-branch:
+    description: 'Generator branch'
+    value: ${{ steps.init.outputs.jhi-gen-branch }}
+  jhi-version:
+    description: 'Generator JHipster version'
+    value: ${{ steps.init.outputs.jhi-version }}
+  java-version:
+    description: 'Java version (alias for jhi-jdk)'
+    value: ${{ steps.init.outputs.jhi-jdk }}
+  node-version:
+    description: 'Node version (alias for jhi-node-version)'
+    value: ${{ steps.init.outputs.jhi-node-version }}
+  npm-version:
+    description: 'NPM version (alias for jhi-npm-version)'
+    value: ${{ steps.init.outputs.jhi-npm-version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Initialize environment variables
+      id: init
+      shell: bash
+      run: |
+        # Detect JHipster directory (equivalent to the BASH_SOURCE detection)
+        JHI_DETECTED_DIR="${{ github.workspace }}/${{ inputs.generator-path }}"
+        
+        # Initialize helper function
+        init_var() {
+          local result=""
+          if [[ "$1" != "" ]]; then
+            result="$1"
+          elif [[ "$2" != "" ]]; then
+            result="$2"
+          elif [[ "$3" != "" ]]; then
+            result="$3"
+          fi
+          echo "$result"
+        }
+        
+        # Set JHI_REPO
+        if [[ "${{ inputs.jhi-repo }}" != "" ]]; then
+          JHI_REPO="${{ inputs.jhi-repo }}"
+        else
+          JHI_REPO=$(init_var "$BUILD_REPOSITORY_URI" "${{ github.workspace }}")
+        fi
+        
+        # Set JHI_HOME
+        if [[ "${{ inputs.jhi-home }}" != "" ]]; then
+          JHI_HOME="${{ inputs.jhi-home }}"
+        else
+          JHI_HOME="$JHI_DETECTED_DIR"
+        fi
+        
+        # Set JHI_CLI_PACKAGE_PATH
+        if [[ "${{ inputs.jhi-cli-package-path }}" != "" ]]; then
+          JHI_CLI_PACKAGE_PATH="${{ inputs.jhi-cli-package-path }}"
+        elif [[ "${{ inputs.jhi-cli-package }}" != "" && "${{ inputs.jhi-workspace }}" != "" ]]; then
+          JHI_CLI_PACKAGE_PATH="${{ inputs.jhi-workspace }}/${{ inputs.jhi-cli-package }}"
+        else
+          JHI_CLI_PACKAGE_PATH="$JHI_HOME"
+        fi
+        
+        # Set JHI_REPO_PATH
+        if [[ "${{ inputs.jhi-repo-path }}" != "" ]]; then
+          JHI_REPO_PATH="${{ inputs.jhi-repo-path }}"
+        else
+          JHI_REPO_PATH=$(init_var "$BUILD_REPOSITORY_LOCALPATH" "${{ github.workspace }}")
+        fi
+        
+        # Set JHI_LIB_HOME
+        if [[ "${{ inputs.jhi-lib-home }}" != "" ]]; then
+          JHI_LIB_HOME="${{ inputs.jhi-lib-home }}"
+        elif [[ "$JHI_REPO" == *"/jhipster-bom" ]]; then
+          JHI_LIB_HOME="$JHI_REPO_PATH"
+        else
+          JHI_LIB_HOME="$HOME/jhipster-bom"
+        fi
+        
+        # Set JHI_INTEG
+        if [[ "${{ inputs.jhi-integ }}" != "" ]]; then
+          JHI_INTEG="${{ inputs.jhi-integ }}"
+        else
+          JHI_INTEG="$JHI_HOME/test-integration"
+        fi
+        
+        # Set JHI_SAMPLES
+        if [[ "${{ inputs.jhi-samples }}" != "" ]]; then
+          JHI_SAMPLES="${{ inputs.jhi-samples }}"
+        else
+          JHI_SAMPLES="$JHI_INTEG/samples"
+        fi
+        
+        # Set JHI_ENTITY_SAMPLES
+        if [[ -d "$JHI_SAMPLES/.jhipster" ]]; then
+          JHI_ENTITY_SAMPLES="$JHI_SAMPLES/.jhipster"
+        else
+          JHI_ENTITY_SAMPLES="$JHI_HOME/.blueprint/generate-sample/templates/samples/samples/.jhipster"
+        fi
+        
+        # Set JHI_JDL_SAMPLES
+        if [[ "${{ inputs.jhi-jdl-samples }}" != "" ]]; then
+          JHI_JDL_SAMPLES="${{ inputs.jhi-jdl-samples }}"
+        else
+          JHI_JDL_SAMPLES="$JHI_INTEG/jdl-samples"
+        fi
+        
+        # Set JHI_SCRIPTS
+        if [[ "${{ inputs.jhi-scripts }}" != "" ]]; then
+          JHI_SCRIPTS="${{ inputs.jhi-scripts }}"
+        else
+          JHI_SCRIPTS="$JHI_INTEG/scripts"
+        fi
+        
+        # Set JHI_FOLDER_APP
+        if [[ "${{ inputs.jhi-folder-app }}" != "" ]]; then
+          JHI_FOLDER_APP="${{ inputs.jhi-folder-app }}"
+        else
+          JHI_FOLDER_APP="$HOME/app"
+        fi
+        
+        # Set JHI_JDK
+        if [[ "${{ inputs.jhi-jdk }}" != "" ]]; then
+          JHI_JDK="${{ inputs.jhi-jdk }}"
+        else
+          JHI_JDK=$(grep -o "JAVA_VERSION = '[^']*'" "$JHI_HOME/generators/generator-constants.js" | cut -f2 -d "'")
+        fi
+        
+        # Set JAVA_HOME for JDK 17 (non-GitHub CI)
+        if [[ "$JHI_JDK" == "17" && "${{ inputs.jhi-github-ci }}" != "true" ]]; then
+          JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
+          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+        fi
+        
+        # Set JHI_CLI
+        if [[ "${{ inputs.jhi-cli }}" != "" ]]; then
+          JHI_CLI="${{ inputs.jhi-cli }}"
+        else
+          JHI_CLI="jhipster"
+        fi
+        
+        # Get Node version
+        JHI_NODE_VERSION=$(cat "$JHI_HOME/generators/init/resources/.node-version")
+        
+        # Get NPM version
+        JHI_NPM_VERSION=$(grep -o '"npm": "[^"]*"' "$JHI_HOME/generators/common/resources/package.json" | cut -f4 -d '"')
+        
+        # Get generator branch
+        JHI_GEN_BRANCH=$(grep -o "JHIPSTER_BOM_BRANCH = '[^']*'" "$JHI_HOME/test-integration/integration-test-constants.js" | cut -f2 -d "'")
+        
+        # Get generator version
+        JHI_VERSION=$(grep -o '"version": "[^"]*"' "$JHI_HOME/package.json" | cut -f4 -d '"')
+        
+        # Output all variables
+        echo "jhi-detected-dir=$JHI_DETECTED_DIR" >> $GITHUB_OUTPUT
+        echo "jhi-repo=$JHI_REPO" >> $GITHUB_OUTPUT
+        echo "jhi-home=$JHI_HOME" >> $GITHUB_OUTPUT
+        echo "jhi-cli-package-path=$JHI_CLI_PACKAGE_PATH" >> $GITHUB_OUTPUT
+        echo "jhi-repo-path=$JHI_REPO_PATH" >> $GITHUB_OUTPUT
+        echo "jhi-lib-home=$JHI_LIB_HOME" >> $GITHUB_OUTPUT
+        echo "jhi-integ=$JHI_INTEG" >> $GITHUB_OUTPUT
+        echo "jhi-samples=$JHI_SAMPLES" >> $GITHUB_OUTPUT
+        echo "jhi-entity-samples=$JHI_ENTITY_SAMPLES" >> $GITHUB_OUTPUT
+        echo "jhi-jdl-samples=$JHI_JDL_SAMPLES" >> $GITHUB_OUTPUT
+        echo "jhi-scripts=$JHI_SCRIPTS" >> $GITHUB_OUTPUT
+        echo "jhi-folder-app=$JHI_FOLDER_APP" >> $GITHUB_OUTPUT
+        echo "jhi-jdk=$JHI_JDK" >> $GITHUB_OUTPUT
+        echo "jhi-cli=$JHI_CLI" >> $GITHUB_OUTPUT
+        echo "jhi-node-version=$JHI_NODE_VERSION" >> $GITHUB_OUTPUT
+        echo "jhi-npm-version=$JHI_NPM_VERSION" >> $GITHUB_OUTPUT
+        echo "jhi-gen-branch=$JHI_GEN_BRANCH" >> $GITHUB_OUTPUT
+        echo "jhi-version=$JHI_VERSION" >> $GITHUB_OUTPUT
+        
+        # Also set environment variables for use in subsequent steps
+        echo "JHI_DETECTED_DIR=$JHI_DETECTED_DIR" >> $GITHUB_ENV
+        echo "JHI_REPO=$JHI_REPO" >> $GITHUB_ENV
+        echo "JHI_HOME=$JHI_HOME" >> $GITHUB_ENV
+        echo "JHI_CLI_PACKAGE_PATH=$JHI_CLI_PACKAGE_PATH" >> $GITHUB_ENV
+        echo "JHI_REPO_PATH=$JHI_REPO_PATH" >> $GITHUB_ENV
+        echo "JHI_LIB_HOME=$JHI_LIB_HOME" >> $GITHUB_ENV
+        echo "JHI_INTEG=$JHI_INTEG" >> $GITHUB_ENV
+        echo "JHI_SAMPLES=$JHI_SAMPLES" >> $GITHUB_ENV
+        echo "JHI_ENTITY_SAMPLES=$JHI_ENTITY_SAMPLES" >> $GITHUB_ENV
+        echo "JHI_JDL_SAMPLES=$JHI_JDL_SAMPLES" >> $GITHUB_ENV
+        echo "JHI_SCRIPTS=$JHI_SCRIPTS" >> $GITHUB_ENV
+        echo "JHI_FOLDER_APP=$JHI_FOLDER_APP" >> $GITHUB_ENV
+        echo "JHI_JDK=$JHI_JDK" >> $GITHUB_ENV
+        echo "JHI_CLI=$JHI_CLI" >> $GITHUB_ENV
+        echo "JHI_NODE_VERSION=$JHI_NODE_VERSION" >> $GITHUB_ENV
+        echo "JHI_NPM_VERSION=$JHI_NPM_VERSION" >> $GITHUB_ENV
+        echo "JHI_GEN_BRANCH=$JHI_GEN_BRANCH" >> $GITHUB_ENV
+        echo "JHI_VERSION=$JHI_VERSION" >> $GITHUB_ENV

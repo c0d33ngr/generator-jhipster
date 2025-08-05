@@ -26,19 +26,17 @@ inputs:
 runs:
   using: composite
   steps:
-    - run: |
-        source "${{ github.workspace }}/${{ inputs.generator-path }}/test-integration/scripts/00-init-env.sh"
-        echo "java-version=$JHI_JDK" >> $GITHUB_OUTPUT
-        echo "node-version=$JHI_NODE_VERSION" >> $GITHUB_OUTPUT
-        echo "npm-version=$JHI_NPM_VERSION" >> $GITHUB_OUTPUT
-      shell: bash
-      id: setup
+    - name: Initialize JHipster environment
+      id: init-env
+      uses: ./.github/actions/init-env
+      with:
+        generator-path: ${{ inputs.generator-path }}
     - uses: actions/setup-node@v4
       with:
-        node-version: ${{ steps.setup.outputs.node-version }}
-    - run: npm install -g npm@${{ steps.setup.outputs.npm-version }}
+        node-version: ${{ steps.init-env.outputs.node-version }}
+    - run: npm install -g npm@${{ steps.init-env.outputs.npm-version }}
       shell: bash
     - uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: ${{ steps.setup.outputs.java-version }}
+        java-version: ${{ steps.init-env.outputs.java-version }}
